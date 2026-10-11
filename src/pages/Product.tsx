@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { api, type Product, type Review } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
 import { useCart } from "../cart/CartContext";
+import { Stars } from "../components/ProductCard";
 import { taka } from "../lib/format";
 
 export function ProductPage() {
@@ -12,6 +13,7 @@ export function ProductPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [qty, setQty] = useState(1);
+  const [variantId, setVariantId] = useState<string>("");
   const [added, setAdded] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -33,6 +35,11 @@ export function ProductPage() {
 
   if (!product) return <div className="text-gray-500">Loading…</div>;
   const images = product.images ?? [];
+  const variants = (product.variants ?? []).filter((v) => v.isActive);
+  const selected = variants.find((v) => v.id === variantId) ?? null;
+  const price = selected?.priceCents ?? product.priceCents;
+  const stock = selected ? selected.stock : product.stock;
+  const needsVariant = variants.length > 0 && !selected;
 
   const submitReview = async () => {
     if (!product) return;
@@ -46,6 +53,7 @@ export function ProductPage() {
       return [...rest, r.review];
     });
     setComment("");
+    api<{ product: Product }>(`/api/products/${product.id}`).then((p) => setProduct(p.product as Product));
   };
 
   return (
@@ -75,35 +83,67 @@ export function ProductPage() {
 
       <div>
         <h1 className="text-2xl font-bold">{product.name}</h1>
+        {product.brand && <div className="mt-1 text-sm uppercase tracking-wide text-gray-400">{product.brand}</div>}
+        <div className="mt-1">
+          <Stars avg={product.ratingAvg} count={product.ratingCount} />
+        </div>
         <div className="mt-2 flex items-baseline gap-3">
-          <span className="text-xl font-semibold">{taka(product.priceCents)}</span>
-          {product.comparePriceCents && product.comparePriceCents > product.priceCents && (
+          <span className="text-xl font-semibold">{taka(price)}</span>
+          {product.comparePriceCents && product.comparePriceCents > price && (
             <span className="text-gray-400 line-through">{taka(product.comparePriceCents)}</span>
           )}
         </div>
+        {(product.tags ?? []).length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {(product.tags ?? []).map((t) => (
+              <span key={t.slug} className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                {t.name}
+              </span>
+            ))}
+          </div>
+        )}
         <p className="mt-1 text-sm text-gray-500">
-          {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+          {stock > 0 ? `${stock} in stock` : "Out of stock"}
         </p>
         {product.description && <p className="mt-4 whitespace-pre-line text-gray-700">{product.description}</p>}
+
+        {variants.length > 0 && (
+          <div className="mt-4">
+            <div className="text-sm text-gray-600">Select option</div>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {variants.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => setVariantId(v.id)}
+                  className={`rounded-lg border px-3 py-1 text-sm ${v.id === variantId ? "border-emerald-600 bg-emerald-50 font-semibold" : "hover:bg-gray-50"}`}
+                >
+                  {v.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 flex items-center gap-3">
           <input
             type="number"
             min={1}
-            max={Math.max(1, product.stock)}
+            max={Math.max(1, stock)}
             value={qty}
             onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
             className="w-20 rounded-lg border px-3 py-2"
           />
           <button
-            disabled={product.stock <= 0}
-            onClick={() => add(product.id, qty).then(() => setAdded(true))}
+            disabled={stock <= 0 || needsVariant}
+            onClick={() => add(product.id, qty, selected?.id).then(() => setAdded(true))}
+            title={needsVariant ? "Select an option first" : undefined}
             className="rounded-lg bg-emerald-600 px-5 py-2 text-white hover:bg-emerald-700 disabled:opacity-40"
           >
             Add to cart
           </button>
           {added && <span className="text-sm text-emerald-700">Added ✓</span>}
         </div>
+        {needsVariant && <p className="mt-1 text-sm text-amber-700">Please select an option first.</p>}
         {cartError && <p className="mt-2 text-sm text-red-600">{cartError}</p>}
 
         <div className="mt-10">

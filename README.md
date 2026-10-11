@@ -35,6 +35,7 @@ Vercel domain to the backend's `ALLOWED_ORIGINS` and redeploy the Worker.
 ## Notes
 
 - Guests shop with an `X-Guest-Token` cart (localStorage); login/register auto-merges it.
+- Products support variants (required selection), brands, tags, featured shelf, and ratings.
 - Prices render from integer cents as ৳ (BDT).
 - Token refresh is automatic on 401 (single retry).
 - No admin UI here — catalog management stays in backend API calls for now.

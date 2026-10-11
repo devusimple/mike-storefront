@@ -2,6 +2,16 @@ import { Link } from "react-router-dom";
 import { taka } from "../lib/format";
 import type { Product } from "../lib/api";
 
+export function Stars({ avg, count }: { avg: number; count: number }) {
+  if (!count) return null;
+  const full = Math.round(avg);
+  return (
+    <span className="text-xs text-amber-500" title={`${avg.toFixed(1)} from ${count} reviews`}>
+      {"★".repeat(full)}{"☆".repeat(5 - full)} <span className="text-gray-400">({count})</span>
+    </span>
+  );
+}
+
 export function ProductCard({ product }: { product: Product }) {
   const img = product.images?.[0]?.secureUrl;
   return (
@@ -19,7 +29,9 @@ export function ProductCard({ product }: { product: Product }) {
         )}
       </div>
       <div className="p-3">
+        {product.brand && <div className="text-[11px] uppercase tracking-wide text-gray-400">{product.brand}</div>}
         <div className="truncate text-sm font-medium group-hover:underline">{product.name}</div>
+        <Stars avg={product.ratingAvg} count={product.ratingCount} />
         <div className="mt-1 flex items-baseline gap-2">
           <span className="font-semibold">{taka(product.priceCents)}</span>
           {product.comparePriceCents && product.comparePriceCents > product.priceCents && (

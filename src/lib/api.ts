@@ -111,6 +111,19 @@ export interface ProductImage {
   height: number | null;
   position: number;
 }
+export interface ProductVariant {
+  id: string;
+  name: string;
+  sku: string | null;
+  priceCents: number | null;
+  stock: number;
+  isActive: boolean;
+  position: number;
+}
+export interface Tag {
+  name: string;
+  slug: string;
+}
 export interface Product {
   id: string;
   slug: string;
@@ -122,13 +135,22 @@ export interface Product {
   stock: number;
   categoryId: string | null;
   isActive: boolean;
+  brand: string | null;
+  featured: boolean;
+  ratingAvg: number;
+  ratingCount: number;
   images?: ProductImage[];
+  variants?: ProductVariant[];
+  tags?: Tag[];
 }
 export interface CartItem {
   id: string;
   productId: string;
+  variantId: string | null;
   qty: number;
   product: Product;
+  variant: { id: string; name: string; priceCents: number | null } | null;
+  unitPriceCents: number;
   thumbnail: string | null;
 }
 export interface Order {
@@ -144,6 +166,8 @@ export interface OrderItem {
   id: string;
   productId: string | null;
   productName: string;
+  variantId: string | null;
+  variantName: string | null;
   qty: number;
   unitPriceCents: number;
 }

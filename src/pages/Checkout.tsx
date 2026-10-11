@@ -63,9 +63,10 @@ export function CheckoutPage() {
         {items.map((i) => (
           <div key={i.id} className="flex justify-between text-sm">
             <span>
-              {i.product.name} × {i.qty}
+              {i.product.name}
+              {i.variant ? ` (${i.variant.name})` : ""} × {i.qty}
             </span>
-            <span>{taka(i.product.priceCents * i.qty)}</span>
+            <span>{taka(i.unitPriceCents * i.qty)}</span>
           </div>
         ))}
         <div className="flex justify-between border-t pt-2 font-semibold">

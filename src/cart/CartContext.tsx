@@ -9,9 +9,9 @@ interface CartState {
   guest: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
-  add: (productId: string, qty?: number) => Promise<void>;
-  setQty: (productId: string, qty: number) => Promise<void>;
-  remove: (productId: string) => Promise<void>;
+  add: (productId: string, qty?: number, variantId?: string) => Promise<void>;
+  setQty: (productId: string, qty: number, variantId?: string | null) => Promise<void>;
+  remove: (productId: string, variantId?: string | null) => Promise<void>;
   clear: () => Promise<void>;
   error: string | null;
 }
@@ -88,17 +88,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const add = useCallback(
-    (productId: string, qty = 1) =>
-      mutate((opts) => api("/api/cart/items", { method: "POST", body: { productId, qty }, ...opts })),
+    (productId: string, qty = 1, variantId?: string) =>
+      mutate((opts) =>
+        api("/api/cart/items", { method: "POST", body: { productId, variantId, qty }, ...opts }),
+      ),
     [mutate],
   );
   const setQty = useCallback(
-    (productId: string, qty: number) =>
-      mutate((opts) => api(`/api/cart/items/${productId}`, { method: "PUT", body: { qty }, ...opts })),
+    (productId: string, qty: number, variantId?: string | null) => {
+      const path = variantId
+        ? `/api/cart/items/${productId}?variantId=${encodeURIComponent(variantId)}`
+        : `/api/cart/items/${productId}`;
+      return mutate((opts) => api(path, { method: "PUT", body: { qty }, ...opts }));
+    },
     [mutate],
   );
   const remove = useCallback(
-    (productId: string) => mutate((opts) => api(`/api/cart/items/${productId}`, { method: "DELETE", ...opts })),
+    (productId: string, variantId?: string | null) => {
+      const path = variantId
+        ? `/api/cart/items/${productId}?variantId=${encodeURIComponent(variantId)}`
+        : `/api/cart/items/${productId}`;
+      return mutate((opts) => api(path, { method: "DELETE", ...opts }));
+    },
     [mutate],
   );
   const clear = useCallback(

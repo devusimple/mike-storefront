@@ -92,7 +92,8 @@ export function OrderPage() {
         {items.map((i) => (
           <div key={i.id} className="flex justify-between py-1 text-sm">
             <span>
-              {i.productName} × {i.qty}
+              {i.productName}
+              {i.variantName ? ` (${i.variantName})` : ""} × {i.qty}
             </span>
             <span>{taka(i.unitPriceCents * i.qty)}</span>
           </div>

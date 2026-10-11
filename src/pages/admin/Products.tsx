@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type Category, type Product } from "../../lib/api";
+import { api, type Category, type Product, type ProductVariant } from "../../lib/api";
 import { taka } from "../../lib/format";
 
 interface Form {
@@ -11,6 +11,9 @@ interface Form {
   stock: string;
   categoryId: string;
   isActive: boolean;
+  brand: string;
+  featured: boolean;
+  tagsText: string;
 }
 
 const EMPTY: Form = {
@@ -22,7 +25,19 @@ const EMPTY: Form = {
   stock: "0",
   categoryId: "",
   isActive: true,
+  brand: "",
+  featured: false,
+  tagsText: "",
 };
+
+interface VariantForm {
+  name: string;
+  sku: string;
+  priceTaka: string;
+  stock: string;
+}
+
+const EMPTY_VARIANT: VariantForm = { name: "", sku: "", priceTaka: "", stock: "0" };
 
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -56,6 +71,9 @@ export function AdminProducts() {
       stock: Number(form.stock) || 0,
       categoryId: form.categoryId || undefined,
       isActive: form.isActive,
+      brand: form.brand || undefined,
+      featured: form.featured,
+      tags: form.tagsText.split(",").map((t) => t.trim()).filter(Boolean),
     };
     try {
       if (editingId) {
@@ -82,8 +100,17 @@ export function AdminProducts() {
       stock: String(p.stock),
       categoryId: p.categoryId ?? "",
       isActive: p.isActive,
+      brand: p.brand ?? "",
+      featured: p.featured,
+      tagsText: (p.tags ?? []).map((t) => t.name).join(", "),
     });
     window.scrollTo({ top: 0 });
+  };
+
+  const refreshEditing = async (productId: string) => {
+    await load();
+    const fresh = await api<{ product: Product }>(`/api/products/${productId}`, { auth: true });
+    edit(fresh.product);
   };
 
   const remove = async (id: string) => {
@@ -120,10 +147,7 @@ export function AdminProducts() {
         auth: true,
         body: { publicId: up.public_id, secureUrl: up.secure_url, width: up.width, height: up.height },
       });
-      await load();
-      // Keep editing the same product with refreshed images.
-      const fresh = await api<{ product: Product }>(`/api/products/${productId}`, { auth: true });
-      edit(fresh.product);
+      await refreshEditing(productId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Image upload failed");
     } finally {
@@ -133,9 +157,45 @@ export function AdminProducts() {
 
   const deleteImage = async (productId: string, imageId: string) => {
     await api(`/api/products/${productId}/images/${imageId}`, { method: "DELETE", auth: true });
-    await load();
-    const fresh = await api<{ product: Product }>(`/api/products/${productId}`, { auth: true });
-    edit(fresh.product);
+    await refreshEditing(productId);
+  };
+
+  const [vform, setVform] = useState<VariantForm>(EMPTY_VARIANT);
+
+  const addVariant = async (productId: string) => {
+    setError(null);
+    try {
+      await api(`/api/products/${productId}/variants`, {
+        method: "POST",
+        auth: true,
+        body: {
+          name: vform.name,
+          sku: vform.sku || undefined,
+          priceCents: vform.priceTaka ? Math.round(Number(vform.priceTaka) * 100) : null,
+          stock: Number(vform.stock) || 0,
+        },
+      });
+      setVform(EMPTY_VARIANT);
+      await refreshEditing(productId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Variant create failed");
+    }
+  };
+
+  const saveVariant = async (productId: string, vid: string, patch: Record<string, unknown>) => {
+    setError(null);
+    try {
+      await api(`/api/products/${productId}/variants/${vid}`, { method: "PUT", auth: true, body: patch });
+      await refreshEditing(productId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Variant save failed");
+    }
+  };
+
+  const deleteVariant = async (productId: string, vid: string, name: string) => {
+    if (!confirm(`Delete variant "${name}"? Its cart lines will be removed; order history is kept.`)) return;
+    await api(`/api/products/${productId}/variants/${vid}`, { method: "DELETE", auth: true });
+    await refreshEditing(productId);
   };
 
   const editing = editingId ? products.find((p) => p.id === editingId) : null;
@@ -152,6 +212,8 @@ export function AdminProducts() {
           <input required type="number" min={0} step="0.01" placeholder="Price (৳)" value={form.priceTaka} onChange={(e) => set({ priceTaka: e.target.value })} className={input} />
           <input type="number" min={0} step="0.01" placeholder="Compare price ৳ (optional)" value={form.compareTaka} onChange={(e) => set({ compareTaka: e.target.value })} className={input} />
           <input type="number" min={0} placeholder="Stock" value={form.stock} onChange={(e) => set({ stock: e.target.value })} className={input} />
+          <input placeholder="Brand (optional)" value={form.brand} onChange={(e) => set({ brand: e.target.value })} className={input} />
+          <input placeholder="Tags, comma separated (optional)" value={form.tagsText} onChange={(e) => set({ tagsText: e.target.value })} className={`${input} sm:col-span-2`} />
           <select value={form.categoryId} onChange={(e) => set({ categoryId: e.target.value })} className={input}>
             <option value="">No category</option>
             {categories.map((c) => (
@@ -165,6 +227,10 @@ export function AdminProducts() {
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={form.isActive} onChange={(e) => set({ isActive: e.target.checked })} />
           Visible in shop
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={form.featured} onChange={(e) => set({ featured: e.target.checked })} />
+          Featured (homepage shelf)
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">
@@ -213,6 +279,27 @@ export function AdminProducts() {
         </div>
       )}
 
+      {editing && (
+        <div className="mt-4 max-w-2xl rounded-xl border bg-white p-4">
+          <h2 className="text-sm font-semibold">Variants ({editing.variants?.length ?? 0})</h2>
+          <p className="text-xs text-gray-500">Empty price = inherits product price. Cart requires a variant when any exist.</p>
+          <div className="mt-2 space-y-2">
+            {(editing.variants ?? []).map((v) => (
+              <VariantRow key={v.id} productId={editing.id} variant={v} onSave={saveVariant} onDelete={deleteVariant} />
+            ))}
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <input placeholder="Name (e.g. Black / L)" value={vform.name} onChange={(e) => setVform({ ...vform, name: e.target.value })} className={input} />
+            <input placeholder="SKU" value={vform.sku} onChange={(e) => setVform({ ...vform, sku: e.target.value })} className={input} />
+            <input type="number" min={0} step="0.01" placeholder="Price ৳ (empty = base)" value={vform.priceTaka} onChange={(e) => setVform({ ...vform, priceTaka: e.target.value })} className={input} />
+            <input type="number" min={0} placeholder="Stock" value={vform.stock} onChange={(e) => setVform({ ...vform, stock: e.target.value })} className={input} />
+            <button onClick={() => vform.name && addVariant(editing.id)} className="rounded-lg bg-gray-900 px-3 py-2 text-sm text-white">
+              Add
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1 className="mt-8 text-lg font-bold">All products ({products.length})</h1>
       <div className="mt-3 space-y-2">
         {products.map((p) => (
@@ -226,6 +313,9 @@ export function AdminProducts() {
               </div>
               <div className="text-gray-500">
                 {taka(p.priceCents)} · stock {p.stock}
+                {p.brand ? ` · ${p.brand}` : ""}
+                {(p.variants?.length ?? 0) > 0 ? ` · ${p.variants?.length} variants` : ""}
+                {p.featured ? " · ★" : ""}
               </div>
             </div>
             <button onClick={() => edit(p)} className="rounded border px-2 py-1 hover:bg-gray-50">
@@ -237,6 +327,76 @@ export function AdminProducts() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function VariantRow({
+  productId,
+  variant,
+  onSave,
+  onDelete,
+}: {
+  productId: string;
+  variant: ProductVariant;
+  onSave: (productId: string, vid: string, patch: Record<string, unknown>) => Promise<void>;
+  onDelete: (productId: string, vid: string, name: string) => Promise<void>;
+}) {
+  const [name, setName] = useState(variant.name);
+  const [priceTaka, setPriceTaka] = useState(variant.priceCents != null ? String(variant.priceCents / 100) : "");
+  const [stock, setStock] = useState(String(variant.stock));
+  const dirty =
+    name !== variant.name ||
+    (priceTaka === "" ? null : Math.round(Number(priceTaka) * 100)) !== variant.priceCents ||
+    Number(stock) !== variant.stock;
+
+  const input = "rounded border px-2 py-1 text-sm";
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg bg-gray-50 p-2 text-sm">
+      <input value={name} onChange={(e) => setName(e.target.value)} className={`${input} w-32`} title="Name" />
+      <input
+        value={priceTaka}
+        onChange={(e) => setPriceTaka(e.target.value)}
+        placeholder="৳ (empty = base)"
+        type="number"
+        min={0}
+        step="0.01"
+        className={`${input} w-28`}
+        title="Price override"
+      />
+      <input
+        value={stock}
+        onChange={(e) => setStock(e.target.value)}
+        type="number"
+        min={0}
+        className={`${input} w-20`}
+        title="Stock"
+      />
+      <span className="text-gray-400">{variant.sku ?? "no sku"}</span>
+      <button
+        onClick={() => onSave(productId, variant.id, { isActive: !variant.isActive })}
+        className={variant.isActive ? "text-gray-500 hover:underline" : "text-amber-700 hover:underline"}
+        title="Toggle active"
+      >
+        {variant.isActive ? "active" : "hidden"}
+      </button>
+      {dirty && (
+        <button
+          onClick={() =>
+            onSave(productId, variant.id, {
+              name,
+              priceCents: priceTaka === "" ? null : Math.round(Number(priceTaka) * 100),
+              stock: Number(stock) || 0,
+            })
+          }
+          className="rounded bg-emerald-600 px-2 py-1 text-white"
+        >
+          Save
+        </button>
+      )}
+      <button onClick={() => onDelete(productId, variant.id, variant.name)} className="text-red-600 hover:underline">
+        Delete
+      </button>
     </div>
   );
 }

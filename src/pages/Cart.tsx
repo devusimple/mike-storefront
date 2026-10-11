@@ -29,19 +29,20 @@ export function CartPage() {
               <Link to={`/p/${item.product.slug}`} className="truncate text-sm font-medium hover:underline">
                 {item.product.name}
               </Link>
-              <div className="text-sm text-gray-500">{taka(item.product.priceCents)} each</div>
+              {item.variant && <div className="text-xs text-gray-500">{item.variant.name}</div>}
+              <div className="text-sm text-gray-500">{taka(item.unitPriceCents)} each</div>
             </div>
             <input
               type="number"
               min={0}
               value={item.qty}
-              onChange={(e) => setQty(item.productId, Math.max(0, Number(e.target.value) || 0))}
+              onChange={(e) => setQty(item.productId, Math.max(0, Number(e.target.value) || 0), item.variantId)}
               className="w-16 rounded-lg border px-2 py-1 text-sm"
             />
             <div className="w-24 text-right text-sm font-semibold">
-              {taka(item.product.priceCents * item.qty)}
+              {taka(item.unitPriceCents * item.qty)}
             </div>
-            <button onClick={() => remove(item.productId)} className="text-sm text-red-600 hover:underline">
+            <button onClick={() => remove(item.productId, item.variantId)} className="text-sm text-red-600 hover:underline">
               Remove
             </button>
           </div>
