@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import { useCart } from "../cart/CartContext";
 import { Stars } from "../components/ProductCard";
 import { thumb } from "../lib/cloudinary";
-import { taka } from "../lib/format";
+import { taka, variantLabel } from "../lib/format";
 
 export function ProductPage() {
   const { slug } = useParams();
@@ -36,6 +36,10 @@ export function ProductPage() {
 
   if (!product) return <div className="text-gray-500">Loading…</div>;
   const images = product.images ?? [];
+  // Thumbnail leads the gallery; extra photos follow.
+  const gallery = product.thumbnailSecureUrl
+    ? [{ id: "thumb", secureUrl: product.thumbnailSecureUrl }, ...images]
+    : images;
   const variants = (product.variants ?? []).filter((v) => v.isActive);
   const selected = variants.find((v) => v.id === variantId) ?? null;
   const price = selected?.priceCents ?? product.priceCents;
@@ -61,15 +65,15 @@ export function ProductPage() {
     <div className="grid gap-8 md:grid-cols-2">
       <div>
         <div className="aspect-square overflow-hidden rounded-xl bg-gray-100">
-          {images[activeImg] ? (
-            <img src={thumb(images[activeImg].secureUrl, 1200)} alt={product.name} className="h-full w-full object-cover" />
+          {gallery[activeImg] ? (
+            <img src={thumb(gallery[activeImg].secureUrl, 1200)} alt={product.name} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center text-gray-400">No image</div>
           )}
         </div>
-        {images.length > 1 && (
+        {gallery.length > 1 && (
           <div className="mt-2 flex gap-2">
-            {images.map((img, i) => (
+            {gallery.map((img, i) => (
               <button
                 key={img.id}
                 onClick={() => setActiveImg(i)}
@@ -116,9 +120,10 @@ export function ProductPage() {
                 <button
                   key={v.id}
                   onClick={() => setVariantId(v.id)}
+                  title={v.name}
                   className={`rounded-lg border px-3 py-1 text-sm ${v.id === variantId ? "border-emerald-600 bg-emerald-50 font-semibold" : "hover:bg-gray-50"}`}
                 >
-                  {v.name}
+                  {variantLabel(v)}
                 </button>
               ))}
             </div>

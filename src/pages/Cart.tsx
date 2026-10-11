@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../cart/CartContext";
 import { thumb } from "../lib/cloudinary";
-import { taka } from "../lib/format";
+import { taka, variantLabel } from "../lib/format";
 
 export function CartPage() {
   const { items, subtotalCents, setQty, remove, clear, error } = useCart();
@@ -30,7 +30,7 @@ export function CartPage() {
               <Link to={`/p/${item.product.slug}`} className="truncate text-sm font-medium hover:underline">
                 {item.product.name}
               </Link>
-              {item.variant && <div className="text-xs text-gray-500">{item.variant.name}</div>}
+              {item.variant && <div className="text-xs text-gray-500">{variantLabel(item.variant)}</div>}
               <div className="text-sm text-gray-500">{taka(item.unitPriceCents)} each</div>
             </div>
             <input

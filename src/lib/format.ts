@@ -7,3 +7,8 @@ export function taka(cents: number): string {
 export function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
 }
+
+/** Shopper-facing variant label: value ("L") wins, else name. */
+export function variantLabel(v: { name: string; value?: string | null }): string {
+  return v.value?.trim() || v.name;
+}

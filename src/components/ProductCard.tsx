@@ -14,7 +14,7 @@ export function Stars({ avg, count }: { avg: number; count: number }) {
 }
 
 export function ProductCard({ product }: { product: Product }) {
-  const img = product.images?.[0]?.secureUrl;
+  const img = product.thumbnailSecureUrl ?? product.images?.[0]?.secureUrl;
   return (
     <Link
       to={`/p/${product.slug}`}

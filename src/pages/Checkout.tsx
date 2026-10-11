@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api, type Order, type ShippingZone } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
 import { useCart } from "../cart/CartContext";
-import { taka } from "../lib/format";
+import { taka, variantLabel } from "../lib/format";
 
 export function CheckoutPage() {
   const { user } = useAuth();
@@ -80,7 +80,7 @@ export function CheckoutPage() {
           <div key={i.id} className="flex justify-between text-sm">
             <span>
               {i.product.name}
-              {i.variant ? ` (${i.variant.name})` : ""} × {i.qty}
+              {i.variant ? ` (${variantLabel(i.variant)})` : ""} × {i.qty}
             </span>
             <span>{taka(i.unitPriceCents * i.qty)}</span>
           </div>

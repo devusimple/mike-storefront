@@ -115,6 +115,7 @@ export interface ProductImage {
 export interface ProductVariant {
   id: string;
   name: string;
+  value: string | null;
   sku: string | null;
   priceCents: number | null;
   stock: number;
@@ -140,6 +141,8 @@ export interface Product {
   featured: boolean;
   ratingAvg: number;
   ratingCount: number;
+  thumbnailPublicId: string | null;
+  thumbnailSecureUrl: string | null;
   images?: ProductImage[];
   variants?: ProductVariant[];
   tags?: Tag[];
@@ -150,7 +153,7 @@ export interface CartItem {
   variantId: string | null;
   qty: number;
   product: Product;
-  variant: { id: string; name: string; priceCents: number | null } | null;
+  variant: { id: string; name: string; value: string | null; priceCents: number | null } | null;
   unitPriceCents: number;
   thumbnail: string | null;
 }
