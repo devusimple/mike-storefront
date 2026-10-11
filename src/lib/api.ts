@@ -159,6 +159,8 @@ export interface Order {
   status: "pending" | "paid" | "shipped" | "cancelled";
   subtotalCents: number;
   discountCents: number;
+  shippingCents: number;
+  shippingZone: string | null;
   totalCents: number;
   couponCode: string | null;
   createdAt: string;
@@ -178,4 +180,12 @@ export interface Review {
   userId: string;
   rating: number;
   comment: string;
+}
+export interface ShippingZone {
+  id: string;
+  name: string;
+  chargeCents: number;
+  freeAboveCents: number | null;
+  active: boolean;
+  position: number;
 }

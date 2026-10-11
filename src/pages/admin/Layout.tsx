@@ -8,6 +8,7 @@ const TABS = [
   { to: "/admin/categories", label: "Categories" },
   { to: "/admin/orders", label: "Orders" },
   { to: "/admin/coupons", label: "Coupons" },
+  { to: "/admin/shipping", label: "Shipping" },
 ];
 
 export function AdminGate() {

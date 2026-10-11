@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api, type Order } from "../lib/api";
+import { api, type Order, type ShippingZone } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
 import { useCart } from "../cart/CartContext";
 import { taka } from "../lib/format";
@@ -10,8 +10,17 @@ export function CheckoutPage() {
   const { items, subtotalCents } = useCart();
   const navigate = useNavigate();
   const [coupon, setCoupon] = useState("");
+  const [zones, setZones] = useState<ShippingZone[]>([]);
+  const [zoneId, setZoneId] = useState("");
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api<{ zones: ShippingZone[] }>("/api/shipping-zones").then((r) => {
+      setZones(r.zones);
+      if (r.zones.length > 0) setZoneId(r.zones[0].id);
+    }).catch(() => {});
+  }, []);
 
   if (!user) {
     return (
@@ -34,6 +43,10 @@ export function CheckoutPage() {
     return <div className="text-center text-gray-500">Your cart is empty.</div>;
   }
 
+  const zone = zones.find((z) => z.id === zoneId) ?? null;
+  const shippingCents =
+    zone && !(zone.freeAboveCents != null && subtotalCents >= zone.freeAboveCents) ? zone.chargeCents : 0;
+
   const placeOrder = async () => {
     setPlacing(true);
     setError(null);
@@ -43,7 +56,10 @@ export function CheckoutPage() {
         {
           method: "POST",
           auth: true,
-          body: coupon.trim() ? { couponCode: coupon.trim() } : {},
+          body: {
+            ...(coupon.trim() ? { couponCode: coupon.trim() } : {}),
+            ...(zone ? { shippingZoneId: zone.id } : {}),
+          },
           idempotencyKey: crypto.randomUUID(),
         },
       );
@@ -73,9 +89,28 @@ export function CheckoutPage() {
           <span>Subtotal</span>
           <span>{taka(subtotalCents)}</span>
         </div>
+        {shippingCents > 0 && (
+          <div className="flex justify-between text-sm">
+            <span>Shipping{zone ? ` (${zone.name})` : ""}</span>
+            <span>{taka(shippingCents)}</span>
+          </div>
+        )}
       </div>
       <div className="mt-4 rounded-xl border bg-white p-4">
-        <label className="text-sm text-gray-600">Coupon code (optional)</label>
+        {zones.length > 0 && (
+          <>
+            <label className="text-sm text-gray-600">Delivery area</label>
+            <select value={zoneId} onChange={(e) => setZoneId(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2">
+              {zones.map((z) => (
+                <option key={z.id} value={z.id}>
+                  {z.name} — {taka(z.chargeCents)}
+                  {z.freeAboveCents != null ? ` (free over ${taka(z.freeAboveCents)})` : ""}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+        <label className="mt-3 block text-sm text-gray-600">Coupon code (optional)</label>
         <input
           value={coupon}
           onChange={(e) => setCoupon(e.target.value.toUpperCase())}

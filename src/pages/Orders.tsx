@@ -109,6 +109,12 @@ export function OrderPage() {
               <span>−{taka(order.discountCents)}</span>
             </div>
           )}
+          {order.shippingCents > 0 && (
+            <div className="flex justify-between">
+              <span>Shipping{order.shippingZone ? ` (${order.shippingZone})` : ""}</span>
+              <span>{taka(order.shippingCents)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-bold">
             <span>Total</span>
             <span>{taka(order.totalCents)}</span>

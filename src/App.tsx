@@ -15,6 +15,7 @@ import { AdminProducts } from "./pages/admin/Products";
 import { AdminCategories } from "./pages/admin/Categories";
 import { AdminOrders } from "./pages/admin/Orders";
 import { AdminCoupons } from "./pages/admin/Coupons";
+import { AdminShipping } from "./pages/admin/Shipping";
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
                   <Route path="categories" element={<AdminCategories />} />
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="coupons" element={<AdminCoupons />} />
+                  <Route path="shipping" element={<AdminShipping />} />
                 </Route>
               </Routes>
             </main>
