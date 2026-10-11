@@ -7,6 +7,7 @@ import { ProductPage } from "./pages/Product";
 import { CartPage } from "./pages/Cart";
 import { CheckoutPage } from "./pages/Checkout";
 import { LoginPage, RegisterPage } from "./pages/Auth";
+import { AccountPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "./pages/Account";
 import { OrderPage, OrdersPage } from "./pages/Orders";
 import { AdminGate } from "./pages/admin/Layout";
 import { AdminDashboard } from "./pages/admin/Dashboard";
@@ -30,6 +31,10 @@ export default function App() {
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/account" element={<AccountPage />} />
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/orders/:id" element={<OrderPage />} />
                 <Route path="/admin" element={<AdminGate />}>

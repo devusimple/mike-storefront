@@ -50,6 +50,9 @@ export function LoginPage() {
         </button>
       </form>
       <p className="mt-3 text-sm text-gray-500">
+        <Link to="/forgot-password" className="text-emerald-700 underline">Forgot password?</Link>
+      </p>
+      <p className="mt-3 text-sm text-gray-500">
         No account? <Link to="/register" className="text-emerald-700 underline">Sign up</Link>
       </p>
     </div>

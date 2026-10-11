@@ -32,7 +32,9 @@ export function Header() {
           </Link>
           {user ? (
             <>
-              <span className="hidden text-gray-500 sm:inline">{user.name}</span>
+              <Link to="/account" className="hidden hover:text-black sm:inline">
+                {user.name}
+              </Link>
               <button
                 className="rounded-full border px-3 py-1 hover:bg-gray-50"
                 onClick={() => logout().then(() => navigate("/"))}

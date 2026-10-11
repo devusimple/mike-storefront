@@ -96,6 +96,7 @@ export interface User {
   email: string;
   name: string;
   role: "customer" | "admin";
+  emailVerified: boolean;
 }
 export interface Category {
   id: string;
