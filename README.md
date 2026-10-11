@@ -11,7 +11,8 @@ bun run dev            # http://localhost:5173
 ```
 
 `VITE_API_BASE` points at the backend (`http://localhost:8787` for local
-backend dev, or the deployed `https://mike.meeet-signaling-server.workers.dev`).
+backend dev, or your deployed Worker URL). Forking? See backend
+`docs/FORK_SETUP.md` for the full checklist (MIT licensed).
 
 ## Deploy (Vercel)
 
