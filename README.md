@@ -13,6 +13,13 @@ bun run dev            # http://localhost:5173
 `VITE_API_BASE` points at the backend (`http://localhost:8787` for local
 backend dev, or the deployed `https://mike.meeet-signaling-server.workers.dev`).
 
+## Deploy (Vercel)
+
+Push this folder's repo — Vercel auto-builds (`bun run build`, output `dist/`).
+`vercel.json` contains the SPA fallback rewrite so direct visits to
+`/admin`, `/cart`, `/p/:slug`, … don't 404. After first deploy, add the
+Vercel domain to the backend's `ALLOWED_ORIGINS` and redeploy the Worker.
+
 ## Pages
 
 | Route | Purpose |
