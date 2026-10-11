@@ -23,6 +23,7 @@ backend dev, or the deployed `https://mike.meeet-signaling-server.workers.dev`).
 | `/checkout` | Login gate, coupon, idempotent COD order placement |
 | `/login`, `/register` | Auth (merges guest cart on success) |
 | `/orders`, `/orders/:id` | Order history + detail with totals |
+| `/admin`, `/admin/products`, `/admin/categories`, `/admin/orders`, `/admin/coupons` | Admin-only: overview, product CRUD + image upload, order statuses, coupons |
 
 ## Notes
 

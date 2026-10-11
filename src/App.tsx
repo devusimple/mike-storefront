@@ -8,6 +8,12 @@ import { CartPage } from "./pages/Cart";
 import { CheckoutPage } from "./pages/Checkout";
 import { LoginPage, RegisterPage } from "./pages/Auth";
 import { OrderPage, OrdersPage } from "./pages/Orders";
+import { AdminGate } from "./pages/admin/Layout";
+import { AdminDashboard } from "./pages/admin/Dashboard";
+import { AdminProducts } from "./pages/admin/Products";
+import { AdminCategories } from "./pages/admin/Categories";
+import { AdminOrders } from "./pages/admin/Orders";
+import { AdminCoupons } from "./pages/admin/Coupons";
 
 export default function App() {
   return (
@@ -26,6 +32,13 @@ export default function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/orders/:id" element={<OrderPage />} />
+                <Route path="/admin" element={<AdminGate />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="categories" element={<AdminCategories />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="coupons" element={<AdminCoupons />} />
+                </Route>
               </Routes>
             </main>
           </div>

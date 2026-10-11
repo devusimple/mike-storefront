@@ -20,6 +20,11 @@ export function Header() {
           <Link to="/orders" className="hover:text-black">
             Orders
           </Link>
+          {user?.role === "admin" && (
+            <Link to="/admin" className="hover:text-black">
+              Admin
+            </Link>
+          )}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
           <Link to="/cart" className="rounded-full border px-3 py-1 hover:bg-gray-50">
