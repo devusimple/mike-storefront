@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { taka } from "../lib/format";
+import { thumb } from "../lib/cloudinary";
 import type { Product } from "../lib/api";
 
 export function Stars({ avg, count }: { avg: number; count: number }) {
@@ -21,7 +22,7 @@ export function ProductCard({ product }: { product: Product }) {
     >
       <div className="aspect-square bg-gray-100">
         {img ? (
-          <img src={img} alt={product.name} loading="lazy" className="h-full w-full object-cover" />
+          <img src={thumb(img, 600)} alt={product.name} loading="lazy" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
             No image

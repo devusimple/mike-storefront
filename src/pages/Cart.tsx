@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../cart/CartContext";
+import { thumb } from "../lib/cloudinary";
 import { taka } from "../lib/format";
 
 export function CartPage() {
@@ -22,7 +23,7 @@ export function CartPage() {
           <div key={item.id} className="flex items-center gap-4 rounded-xl border bg-white p-3">
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100">
               {item.thumbnail ? (
-                <img src={item.thumbnail} alt="" className="h-full w-full object-cover" />
+                <img src={thumb(item.thumbnail, 200)} alt="" className="h-full w-full object-cover" />
               ) : null}
             </div>
             <div className="min-w-0 flex-1">

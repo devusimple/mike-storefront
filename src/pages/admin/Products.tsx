@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, type Category, type Product, type ProductVariant } from "../../lib/api";
+import { thumb } from "../../lib/cloudinary";
 import { taka } from "../../lib/format";
 
 interface Form {
@@ -160,6 +161,31 @@ export function AdminProducts() {
     await refreshEditing(productId);
   };
 
+  const setImagePosition = async (productId: string, imageId: string, position: number) => {
+    await api(`/api/products/${productId}/images/${imageId}`, {
+      method: "PATCH",
+      auth: true,
+      body: { position },
+    });
+  };
+
+  /** Move image within the ordered list (two PATCHes, then refresh once). */
+  const moveImage = async (productId: string, imgs: { id: string }[], from: number, to: number) => {
+    if (to < 0 || to >= imgs.length) return;
+    const ordered = [...imgs];
+    const [moved] = ordered.splice(from, 1);
+    ordered.splice(to, 0, moved);
+    await Promise.all(ordered.map((img, i) => setImagePosition(productId, img.id, i)));
+    await refreshEditing(productId);
+  };
+
+  /** Star = make cover (position 0), keep the rest in order. */
+  const setCover = async (productId: string, imgs: { id: string }[], idx: number) => {
+    const ordered = [imgs[idx], ...imgs.filter((_, i) => i !== idx)];
+    await Promise.all(ordered.map((img, i) => setImagePosition(productId, img.id, i)));
+    await refreshEditing(productId);
+  };
+
   const [vform, setVform] = useState<VariantForm>(EMPTY_VARIANT);
 
   const addVariant = async (productId: string) => {
@@ -247,11 +273,14 @@ export function AdminProducts() {
 
       {editing && (
         <div className="mt-4 max-w-2xl rounded-xl border bg-white p-4">
-          <h2 className="text-sm font-semibold">Images ({editing.images?.length ?? 0})</h2>
+          <h2 className="text-sm font-semibold">Images ({editing.images?.length ?? 0}) — ★ = cover</h2>
           <div className="mt-2 flex flex-wrap gap-2">
-            {(editing.images ?? []).map((img) => (
+            {(editing.images ?? []).map((img, idx, arr) => (
               <div key={img.id} className="relative h-20 w-20 overflow-hidden rounded-lg border">
-                <img src={img.secureUrl} alt="" className="h-full w-full object-cover" />
+                <img src={thumb(img.secureUrl, 200)} alt="" className="h-full w-full object-cover" />
+                {idx === 0 && (
+                  <span className="absolute left-0 top-0 bg-emerald-600 px-1 text-xs text-white">★</span>
+                )}
                 <button
                   onClick={() => deleteImage(editing.id, img.id)}
                   className="absolute right-0 top-0 bg-black/60 px-1 text-xs text-white"
@@ -259,6 +288,11 @@ export function AdminProducts() {
                 >
                   ✕
                 </button>
+                <div className="absolute bottom-0 left-0 right-0 flex justify-between bg-black/60 px-1 text-xs text-white">
+                  <button onClick={() => moveImage(editing.id, arr, idx, idx - 1)} title="Move left">‹</button>
+                  <button onClick={() => setCover(editing.id, arr, idx)} title="Set as cover">★</button>
+                  <button onClick={() => moveImage(editing.id, arr, idx, idx + 1)} title="Move right">›</button>
+                </div>
               </div>
             ))}
           </div>
@@ -305,7 +339,7 @@ export function AdminProducts() {
         {products.map((p) => (
           <div key={p.id} className="flex items-center gap-3 rounded-xl border bg-white p-3 text-sm">
             <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100">
-              {p.images?.[0] && <img src={p.images[0].secureUrl} alt="" className="h-full w-full object-cover" />}
+              {p.images?.[0] && <img src={thumb(p.images[0].secureUrl, 200)} alt="" className="h-full w-full object-cover" />}
             </div>
             <div className="min-w-0 flex-1">
               <div className="truncate font-medium">

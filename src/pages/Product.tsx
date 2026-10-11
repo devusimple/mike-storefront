@@ -4,6 +4,7 @@ import { api, type Product, type Review } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
 import { useCart } from "../cart/CartContext";
 import { Stars } from "../components/ProductCard";
+import { thumb } from "../lib/cloudinary";
 import { taka } from "../lib/format";
 
 export function ProductPage() {
@@ -61,7 +62,7 @@ export function ProductPage() {
       <div>
         <div className="aspect-square overflow-hidden rounded-xl bg-gray-100">
           {images[activeImg] ? (
-            <img src={images[activeImg].secureUrl} alt={product.name} className="h-full w-full object-cover" />
+            <img src={thumb(images[activeImg].secureUrl, 1200)} alt={product.name} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center text-gray-400">No image</div>
           )}
@@ -74,7 +75,7 @@ export function ProductPage() {
                 onClick={() => setActiveImg(i)}
                 className={`h-16 w-16 overflow-hidden rounded-lg border-2 ${i === activeImg ? "border-emerald-600" : "border-transparent"}`}
               >
-                <img src={img.secureUrl} alt="" className="h-full w-full object-cover" />
+                <img src={thumb(img.secureUrl, 200)} alt="" className="h-full w-full object-cover" />
               </button>
             ))}
           </div>
