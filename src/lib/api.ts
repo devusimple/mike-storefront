@@ -175,11 +175,13 @@ export interface CartItem {
 }
 export interface Order {
   id: string;
-  status: "pending" | "paid" | "shipped" | "cancelled";
+  status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
   subtotalCents: number;
   discountCents: number;
   shippingCents: number;
   shippingZone: string | null;
+  carrier: string | null;
+  trackingNumber: string | null;
   totalCents: number;
   couponCode: string | null;
   createdAt: string;
@@ -192,6 +194,13 @@ export interface OrderItem {
   variantName: string | null;
   qty: number;
   unitPriceCents: number;
+}
+export interface OrderEvent {
+  id: string;
+  fromStatus: string | null;
+  toStatus: string;
+  note: string | null;
+  createdAt: string;
 }
 export interface Review {
   id: string;

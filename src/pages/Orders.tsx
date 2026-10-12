@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { api, type Order, type OrderItem } from "../lib/api";
+import { api, type Order, type OrderEvent, type OrderItem } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
 import { taka } from "../lib/format";
 
@@ -50,10 +50,63 @@ export function StatusBadge({ status }: { status: Order["status"] }) {
   const colors: Record<Order["status"], string> = {
     pending: "bg-yellow-100 text-yellow-800",
     paid: "bg-blue-100 text-blue-800",
-    shipped: "bg-emerald-100 text-emerald-800",
+    shipped: "bg-indigo-100 text-indigo-800",
+    delivered: "bg-emerald-600 text-white",
     cancelled: "bg-gray-200 text-gray-600",
   };
   return <span className={`rounded-full px-2 py-0.5 text-xs ${colors[status]}`}>{status}</span>;
+}
+
+const TRACK_STEPS = ["pending", "paid", "shipped", "delivered"] as const;
+
+export function TrackingTimeline({ status, events }: { status: Order["status"]; events: OrderEvent[] }) {
+  if (status === "cancelled") {
+    return (
+      <div className="mt-4 rounded-xl border bg-white p-4 text-sm">
+        <div className="font-semibold text-gray-600">Order cancelled</div>
+        <TimelineEvents events={events} />
+      </div>
+    );
+  }
+  const current = TRACK_STEPS.indexOf(status as (typeof TRACK_STEPS)[number]);
+  return (
+    <div className="mt-4 rounded-xl border bg-white p-4">
+      <div className="flex items-center">
+        {TRACK_STEPS.map((s, i) => (
+          <div key={s} className={`flex items-center ${i < TRACK_STEPS.length - 1 ? "flex-1" : ""}`}>
+            <div className="flex flex-col items-center">
+              <span
+                className={`flex size-7 items-center justify-center rounded-full text-xs font-bold ${
+                  i <= current ? "bg-emerald-600 text-white" : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                {i <= current ? "✓" : i + 1}
+              </span>
+              <span className={`mt-1 text-[11px] capitalize ${i <= current ? "font-semibold" : "text-gray-400"}`}>{s}</span>
+            </div>
+            {i < TRACK_STEPS.length - 1 && (
+              <div className={`mx-1 mb-5 h-0.5 flex-1 ${i < current ? "bg-emerald-600" : "bg-gray-200"}`} />
+            )}
+          </div>
+        ))}
+      </div>
+      <TimelineEvents events={events} />
+    </div>
+  );
+}
+
+function TimelineEvents({ events }: { events: OrderEvent[] }) {
+  if (!events.length) return null;
+  return (
+    <ul className="mt-3 space-y-1 border-t pt-2 text-xs text-gray-500">
+      {events.map((e) => (
+        <li key={e.id}>
+          {new Date(e.createdAt).toLocaleString()} — {e.fromStatus ? `${e.fromStatus} → ` : ""}{e.toStatus}
+          {e.note ? ` · ${e.note}` : ""}
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 export function OrderPage() {
@@ -62,13 +115,15 @@ export function OrderPage() {
   const location = useLocation() as { state?: { fresh?: boolean } };
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
+  const [events, setEvents] = useState<OrderEvent[]>([]);
 
   useEffect(() => {
     if (user && id) {
-      api<{ order: Order; items: OrderItem[] }>(`/api/orders/${id}`, { auth: true })
+      api<{ order: Order; items: OrderItem[]; events: OrderEvent[] }>(`/api/orders/${id}`, { auth: true })
         .then((r) => {
           setOrder(r.order);
           setItems(r.items);
+          setEvents(r.events ?? []);
         })
         .catch(() => {});
     }
@@ -88,6 +143,16 @@ export function OrderPage() {
         <h1 className="text-xl font-bold">Order {order.id.slice(0, 8)}</h1>
         <StatusBadge status={order.status} />
       </div>
+
+      <TrackingTimeline status={order.status} events={events} />
+
+      {(order.carrier || order.trackingNumber) && (
+        <div className="mt-4 rounded-xl border bg-white p-4 text-sm">
+          <div className="font-semibold">Shipment</div>
+          {order.carrier && <div className="text-gray-600">Courier: {order.carrier}</div>}
+          {order.trackingNumber && <div className="text-gray-600">Tracking: <span className="font-mono">{order.trackingNumber}</span></div>}
+        </div>
+      )}
       <div className="mt-4 rounded-xl border bg-white p-4">
         {items.map((i) => (
           <div key={i.id} className="flex justify-between py-1 text-sm">
