@@ -97,6 +97,22 @@ export interface User {
   name: string;
   role: "customer" | "admin";
   emailVerified: boolean;
+  phone: string | null;
+  avatarUrl: string | null;
+}
+export interface Address {
+  id: string;
+  label: string;
+  name: string;
+  phone: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  postalCode: string | null;
+  isDefault: boolean;
+}
+export interface MyReview extends Review {
+  product: { id: string; slug: string; name: string } | null;
 }
 export interface Category {
   id: string;
